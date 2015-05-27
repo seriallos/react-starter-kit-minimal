@@ -56,11 +56,13 @@ gulp.task('bundle', function(cb) {
   var config = require('./webpack.config.js');
   var bundler = webpack(config);
   var verbose = !!argv.verbose;
+  var numProcessed = 0;
 
   function bundle(err, stats) {
     if (err) {
       throw new $.util.PluginError('webpack', err);
     }
+    numProcessed++;
 
     console.log(stats.toString({
       colors: $.util.colors.supportsColor,
@@ -73,7 +75,9 @@ gulp.task('bundle', function(cb) {
       cachedAssets: verbose
     }));
 
-    if (!started) {
+    // don't call cb() until initial bundles are all processed.
+    // without this check, frontend can finish before server and the serve task will fail
+    if (!started && numProcessed >= config.length) {
       started = true;
       return cb();
     }
